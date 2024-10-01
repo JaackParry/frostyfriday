@@ -1,0 +1,29 @@
+-- creating database for challenge solutions
+CREATE DATABASE FROSTY_FRIDAY;
+
+-- creating schema for challenge solutions
+CREATE SCHEMA CHALLENGES;
+
+-- creating file format, skipping headers and ignoring the null values
+CREATE OR REPLACE FILE FORMAT FF1_CSV
+    TYPE = CSV
+    SKIP_HEADER = 1
+    NULL_IF = ('NULL','null','totally_empty');
+
+-- creating s3 external stage
+CREATE OR REPLACE STAGE s3_week_1
+    URL = 's3://frostyfridaychallenges/challenge_1/'
+    FILE_FORMAT = FF1_CSV;
+
+-- listing files in the stage    
+LIST @s3_week_1;
+
+-- creating the table via select statement
+CREATE OR REPLACE TABLE WEEK_1 AS
+SELECT $1 AS RESULT,
+        METADATA$FILENAME AS FILENAME,
+        METADATA$FILE_ROW_NUMBER AS ROWNUM
+FROM @s3_week_1;
+
+-- querying data
+SELECT * FROM WEEK_1;
