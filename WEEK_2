@@ -1,0 +1,46 @@
+--create internal stage for parquet file
+CREATE OR REPLACE STAGE FF_WEEK_2
+    FILE_FORMAT = (TYPE = PARQUET);
+
+--querying stage contents
+SELECT * FROM @FF_WEEK_2;
+
+--creating parsed table
+CREATE OR REPLACE TABLE WEEK_2 AS
+    SELECT $1:city::string as city,
+        $1:country::string as country,
+        $1:country_code::string as country_code, 
+        $1:dept::string as dept,
+        $1:education::string as education,
+        $1:email::string as email,
+        $1:employee_id::integer as employee_id,
+        $1:first_name::string as first_name,
+        $1:job_title::string as job_title,
+        $1:last_name::string as last_name,
+        $1:payroll_iban::string as payroll_iban,
+        $1:postcode::string as postcode,
+        $1:street_name::string as street_name,
+        $1:street_num::string as street_num,
+        $1:time_zone::string as time_zone,
+        $1:title::string as title
+    FROM @FF_WEEK_2;
+
+--create table for tracking dept and job_title
+CREATE OR REPLACE VIEW WEEK_2_TRACKING AS 
+    SELECT employee_id,
+            dept,
+            job_title
+    FROM WEEK_2;
+
+--creating stream on the view
+CREATE OR REPLACE STREAM WEEK_2_STREAM ON VIEW WEEK_2_TRACKING;
+
+--updating records 
+UPDATE WEEK_2 SET COUNTRY = 'Japan' WHERE EMPLOYEE_ID = 8;
+UPDATE WEEK_2 SET LAST_NAME = 'Forester' WHERE EMPLOYEE_ID = 22;
+UPDATE WEEK_2 SET DEPT = 'Marketing' WHERE EMPLOYEE_ID = 25;
+UPDATE WEEK_2 SET TITLE = 'Ms' WHERE EMPLOYEE_ID = 32;
+UPDATE WEEK_2 SET JOB_TITLE = 'Senior Financial Analyst' WHERE EMPLOYEE_ID = 68;
+
+--testing results
+SELECT * FROM WEEK_2_STREAM;
